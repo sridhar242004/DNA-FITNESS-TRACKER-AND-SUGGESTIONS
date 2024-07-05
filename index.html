@@ -3,30 +3,501 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DNA Fitness Planner</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <title>GeneticFit Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #00ffff;
+      --secondary-color: #ff00ff;
+      --tertiary-color: #ffff00;
+      --background-color: #030014;
+      --text-color: #ffffff;
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--tertiary-color));
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    header {
+      background: rgba(3, 0, 20, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 1rem 0;
+      position: fixed;
+      width: 100%;
+      z-index: 1000;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    main {
+      padding-top: 100px;
+    }
+
+    h1, h2, h3 {
+      font-family: 'Orbitron', sans-serif;
+      margin-bottom: 1rem;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .dashboard-card {
+      background: var(--card-bg);
+      border-radius: 15px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 255, 255, 0.1);
+    }
+
+    .dashboard-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+      transform: rotate(30deg);
+      transition: all 0.5s ease;
+      opacity: 0;
+    }
+
+    .dashboard-card:hover::before {
+      opacity: 1;
+      transform: rotate(0deg);
+    }
+
+    .card-small {
+      grid-column: span 3;
+    }
+
+    .card-medium {
+      grid-column: span 6;
+    }
+
+    .card-large {
+      grid-column: span 9;
+    }
+
+    .card-full {
+      grid-column: span 12;
+    }
+
+    .dna-upload {
+      margin-bottom: 2rem;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .file-label {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: var(--gradient);
+      color: var(--background-color);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .file-label::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: rgba(255,255,255,0.2);
+      transform: rotate(45deg);
+      transition: all 0.5s ease;
+    }
+
+    .file-label:hover::after {
+      left: 100%;
+      top: 100%;
+    }
+
+    #recommendations {
+      margin-top: 2rem;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 100%;
+    }
+
+    .progress-ring {
+      width: 150px;
+      height: 150px;
+    }
+
+    .progress-ring__circle {
+      transition: 0.35s stroke-dashoffset;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .stat::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: var(--gradient);
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #dna-model {
+      width: 100%;
+      height: 300px;
+    }
+
+    .genetic-marker {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .genetic-marker:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-5px);
+    }
+
+    .risk-factor {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 50px;
+      margin-bottom: 0.5rem;
+    }
+
+    .risk-factor span:last-child {
+      font-weight: bold;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(0, 255, 255, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(0, 255, 255, 0);
+      }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @media (max-width: 1200px) {
+      .card-small, .card-medium, .card-large {
+        grid-column: span 6;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .card-small, .card-medium, .card-large {
+        grid-column: span 12;
+      }
+    }
+  </style>
 </head>
 <body>
-  <header class="bg-dark text-white p-3">
-    <nav class="container d-flex justify-content-between align-items-center">
-      <a href="index.html" class="text-white text-decoration-none">DNA Fitness Planner</a>
-      <ul class="nav">
-        <li class="nav-item"><a class="nav-link text-white" href="index.html">Home</a></li>
-        <li class="nav-item"><a class="nav-link text-white" href="register.html">Register</a></li>
-        <li class="nav-item"><a class="nav-link text-white" href="login.html">Login</a></li>
-      </ul>
+  <header>
+    <nav class="container">
+      <div class="logo">GeneticFit Pro</div>
     </nav>
   </header>
-  <main class="container my-5">
-    <h1 class="text-center">Welcome to DNA Fitness Planner</h1>
-    <p class="text-center">Get personalized fitness and nutrition plans based on your DNA data.</p>
+
+  <main class="container">
+    <h1>Genetic Fitness Nexus</h1>
+    <p>Welcome, <span id="userName">Fitness Pioneer</span></p>
+
+    <div class="dashboard-grid">
+      <div class="dashboard-card card-medium dna-upload">
+        <h2>DNA Sequencing Upload</h2>
+        <input type="file" id="dnaData" class="file-input" accept=".json">
+        <label for="dnaData" class="file-label pulse">Initiate DNA Analysis</label>
+      </div>
+
+      <div class="dashboard-card card-small">
+        <h2>Fitness Quotient</h2>
+        <svg class="progress-ring" width="150" height="150">
+          <circle class="progress-ring__circle" stroke="url(#gradient)" stroke-width="8" fill="transparent" r="65" cx="75" cy="75"/>
+        </svg>
+        <div id="fitnessScore" class="stat-value" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">0</div>
+      </div>
+
+      <div class="dashboard-card card-small">
+        <h2>Key Metrics</h2>
+        <div id="keyMetrics"></div>
+      </div>
+
+      <div class="dashboard-card card-medium">
+        <h2>Genetic Trait Spectrum</h2>
+        <div class="chart-container">
+          <canvas id="traitsChart"></canvas>
+        </div>
+      </div>
+
+      <div class="dashboard-card card-large">
+        <h2>Personalized Insights</h2>
+        <div id="recommendations"></div>
+      </div>
+
+      <div class="dashboard-card card-medium">
+        <h2>Genetic Markers</h2>
+        <div id="geneticMarkers"></div>
+      </div>
+
+      <div class="dashboard-card card-small">
+        <h2>Risk Factors</h2>
+        <div id="riskFactors"></div>
+      </div>
+
+      <div class="dashboard-card card-full">
+        <h2>Your DNA Blueprint</h2>
+        <div id="dna-model"></div>
+      </div>
+    </div>
   </main>
-  <footer class="bg-dark text-white text-center py-3">
-    <p>&copy; 2024 DNA Fitness Planner. All rights reserved.</p>
-  </footer>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="script.js"></script>
+
+  <svg width="0" height="0">
+    <defs>
+      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="var(--primary-color)" />
+        <stop offset="50%" stop-color="var(--secondary-color)" />
+        <stop offset="100%" stop-color="var(--tertiary-color)" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const dnaUploadInput = document.getElementById('dnaData');
+      const fitnessScoreElement = document.getElementById('fitnessScore');
+      const keyMetricsElement = document.getElementById('keyMetrics');
+      const recommendationsDiv = document.getElementById('recommendations');
+      const geneticMarkersDiv = document.getElementById('geneticMarkers');
+      const riskFactorsDiv = document.getElementById('riskFactors');
+      const progressRing = document.querySelector('.progress-ring__circle');
+      const radius = progressRing.r.baseVal.value;
+      const circumference = radius * 2 * Math.PI;
+
+      progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+      progressRing.style.strokeDashoffset = circumference;
+
+      function setProgress(percent) {
+        const offset = circumference - percent / 100 * circumference;
+        progressRing.style.strokeDashoffset = offset;
+      }
+
+      dnaUploadInput.addEventListener('change', handleDNAUpload);
+
+      function handleDNAUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            try {
+              const dnaData = JSON.parse(e.target.result);
+              updateDashboard(dnaData);
+            } catch (error) {
+              console.error('Error parsing JSON:', error);
+              alert('Invalid JSON file. Please upload a valid DNA data file.');
+            }
+          };
+          reader.readAsText(file);
+        }
+      }
+
+      function updateDashboard(dnaData) {
+        document.getElementById('userName').textContent = dnaData.name;
+        updateFitnessScore(dnaData.genetic_traits);
+        updateKeyMetrics(dnaData.genetic_traits);
+        drawTraitsChart(dnaData.genetic_traits);
+        generateRecommendations(dnaData);
+        displayGeneticMarkers(dnaData.genetic_markers);
+        displayRiskFactors(dnaData.risk_factors);
+        initDNAModel();
+      }
+
+      function updateFitnessScore(traits) {
+        const fitnessScore = calculateFitnessScore(traits);
+        gsap.to(fitnessScoreElement, { innerHTML: Math.round(fitnessScore), duration: 2, ease: "power2.out" });
+        gsap.to({}, {
+          duration: 2,
+          onUpdate: function() {
+            setProgress(this.progress() * fitnessScore);
+          },
+          ease: "power2.out"
+        });
+      }
+
+      function updateKeyMetrics(traits) {
+        keyMetricsElement.innerHTML = Object.entries(traits).map(([key, value]) => `
+          <div class="stat">
+            <span>${key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+            <span class="stat-value">${value.toFixed(1)}</span>
+          </div>
+        `).join('');
+      }
+
+      function calculateFitnessScore(traits) {
+        return Object.values(traits).reduce((sum, value) => sum + value, 0) / Object.keys(traits).length * 10;
+      }
+
+      function drawTraitsChart(traits) {
+        const ctx = document.getElementById('traitsChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: Object.keys(traits).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
+            datasets: [{
+              label: 'Genetic Traits',
+              data: Object.values(traits),
+              backgroundColor: 'rgba(0, 255, 255, 0.2)',
+              borderColor: 'rgba(0, 255, 255, 1)',
+              pointBackgroundColor: 'rgba(0, 255, 255, 1)',
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: 'rgba(0, 255, 255, 1)'
+            }]
+          },
+          options: {
+            scale: {
+              ticks: {
+                beginAtZero: true,
+                max: 10,
+                stepSize: 2
+              }
+            }
+          }
+        });
+      }
+
+      function generateRecommendations(dnaData) {
+        const recommendations = [
+          `Based on your ${dnaData.genetic_traits.endurance} endurance score, focus on ${dnaData.genetic_traits.endurance > 5 ? 'long-distance activities' : 'interval training'}.`,
+          `Your strength score of ${dnaData.genetic_traits.strength} suggests ${dnaData.genetic_traits.strength > 5 ? 'heavy weight training' : 'bodyweight exercises'} would be beneficial.`,
+          `With a flexibility score of ${dnaData.genetic_traits.flexibility}, incorporate ${dnaData.genetic_traits.flexibility > 5 ? 'advanced yoga' : 'daily stretching'} into your routine.`,
+          `Your recovery rate of ${dnaData.genetic_traits.recovery} indicates ${dnaData.genetic_traits.recovery > 5 ? 'faster recovery times' : 'the need for longer rest periods'} between workouts.`,
+        ];
+
+        recommendationsDiv.innerHTML = recommendations.map(rec => `<p>${rec}</p>`).join('');
+      }
+
+      function displayGeneticMarkers(markers) {
+        geneticMarkersDiv.innerHTML = markers.map(marker => `
+          <div class="genetic-marker">
+            <h3>${marker.name}</h3>
+            <p>${marker.description}</p>
+          </div>
+        `).join('');
+      }
+
+      function displayRiskFactors(factors) {
+        riskFactorsDiv.innerHTML = factors.map(factor => `
+          <div class="risk-factor">
+            <span>${factor.name}</span>
+            <span>${factor.risk}%</span>
+          </div>
+        `).join('');
+      }
+
+      function initDNAModel() {
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(300, 300);
+        document.getElementById('dna-model').appendChild(renderer.domElement);
+
+        const geometry = new THREE.CylinderGeometry(1, 1, 20, 32);
+        const material = new THREE.MeshBasicMaterial({color: 0x00ffff, wireframe: true});
+        const cylinder = new THREE.Mesh(geometry, material);
+        scene.add(cylinder);
+
+        camera.position.z = 30;
+
+        function animate() {
+          requestAnimationFrame(animate);
+          cylinder.rotation.x += 0.01;
+          cylinder.rotation.y += 0.01;
+          renderer.render(scene, camera);
+        }
+        animate();
+      }
+    });
+  </script>
 </body>
 </html>
